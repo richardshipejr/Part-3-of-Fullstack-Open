@@ -2,9 +2,11 @@ const { response } = require("express");
 const express = require("express");
 const morgan = require("morgan");
 const app = express();
+const cors = require("cors");
 
+app.use(cors());
 app.use(express.json());
-// app.use(morgan("tiny"));
+app.use(express.static("dist"));
 
 morgan.token("req-body", (req) => {
   if (req.method === "POST") {
@@ -95,18 +97,13 @@ app.post("/api/persons", (request, response) => {
   if (!body.name) {
     return response.status(400).send("Name is required");
   }
-  // body.id = generateId;
-  // if (!body.name || !body.number) {
-  //   console.log("no name!");
-  //   return response.status(404).json({
-  //     error: "missing name",
-  //   });
-  // }
+
   contacts = contacts.concat(body);
   response.json(contacts);
 });
 
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
