@@ -64,7 +64,7 @@ app.get("/info", (request, response) => {
   `);
 });
 
-app.get("/api/persons/:id", (request, response) => {
+app.get("/api/contacts/:id", (request, response) => {
   const searchedId = request.params.id;
   const searchedContact = contacts.find(
     (contact) => contact.id.toString() === searchedId
@@ -77,12 +77,11 @@ app.get("/api/persons/:id", (request, response) => {
   response.json(searchedContact);
 });
 
-app.delete("/api/persons/:id", (request, response) => {
+app.delete("/api/contacts/:id", (request, response) => {
   const searchedId = request.params.id;
   contacts = contacts.filter(
     (contact) => contact.id.toString() !== searchedId.toString()
   );
-  console.log(contacts);
   response.send("successfully deleted!");
 });
 
@@ -92,14 +91,45 @@ const generateId = () => {
   return maxId + 1;
 };
 
-app.post("/api/persons", (request, response) => {
+app.post("/api/contacts", (request, response) => {
   const body = request.body;
-  if (!body.name) {
-    return response.status(400).send("Name is required");
+  if (!body.number || !body.name) {
+    return response.status(400).json({ error: "name or number missing" });
   }
 
-  contacts = contacts.concat(body);
+  const contact = {
+    id: generateId(),
+    name: body.name,
+    number: body.number,
+  };
+
+  contacts = contacts.concat(contact);
   response.json(contacts);
+});
+
+app.put("/api/contacts/:id", (request, response) => {
+  const body = request.body;
+
+  const contactToEdit = contacts.find(
+    (contact) => contact.id.toString() === request.params.id.toString()
+  );
+
+  //if we find a contact to edit then do stuff
+  if (contactToEdit) {
+    const updatedContactInfo = {
+      id: contactToEdit.id,
+      name: contactToEdit.name,
+      number: body.number,
+    };
+    const targetContact = contacts.indexOf(contactToEdit);
+    contacts.splice(targetContact, 1, updatedContactInfo);
+    // response.status(201).json({ message: "contact number updated" });
+    response.json(contacts);
+  } else {
+    response.status(404).json({
+      message: "unable to find contact to edit",
+    });
+  }
 });
 
 const PORT = process.env.PORT || 8001;
