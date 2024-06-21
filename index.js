@@ -4,23 +4,29 @@ const morgan = require("morgan");
 const app = express();
 const cors = require("cors");
 
+const mongoose = require("mongoose");
+const password = process.argv[2];
+console.log(process.argv);
+console.log("password", password);
+// console.log("password", process.argv);
+
+const url = `mongodb+srv://rshipejr:${password}@fullstackopenpart3.zxrdw2v.mongodb.net/phonebookContacts?retryWrites=true&w=majority&appName=FullStackOpenPart3`;
+
+mongoose.set("strictQuery", false);
+mongoose.connect(url);
+
+const contactSchema = new mongoose.Schema({
+  name: String,
+  phoneNumber: String,
+});
+
+const Contact = mongoose.model("Contact", contactSchema);
+
 app.use(cors());
 app.use(express.json());
 app.use(express.static("dist"));
 
-morgan.token("req-body", (req) => {
-  if (req.method === "POST") {
-    return JSON.stringify(req.body.name);
-  } else {
-    return "";
-  }
-});
-
-app.use(
-  morgan(
-    ":method :url :status :res[content-length] - :response-time ms :req-body"
-  )
-);
+app.use(morgan("tiny"));
 
 let contacts = [
   {
@@ -50,7 +56,9 @@ app.get("/", (request, response) => {
 });
 
 app.get("/api/contacts", (request, response) => {
-  response.json(contacts);
+  Contact.find({}).then((contacts) => {
+    response.json(contacts);
+  });
 });
 
 const now = new Date();

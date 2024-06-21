@@ -7,7 +7,7 @@ const url = `mongodb+srv://rshipejr:${password}@fullstackopenpart3.zxrdw2v.mongo
 mongoose.set("strictQuery", false);
 
 mongoose.connect(url);
-
+console.log(url);
 const contactSchema = new mongoose.Schema({
   name: String,
   phoneNumber: String,
