@@ -5,24 +5,6 @@ const app = express();
 const Contact = require("./models/contact");
 const cors = require("cors");
 
-// const mongoose = require("mongoose");
-// const password = process.argv[2];
-// console.log(process.argv);
-// console.log("password", password);
-// console.log("password", process.argv);
-
-// const url = `mongodb+srv://rshipejr:${password}@fullstackopenpart3.zxrdw2v.mongodb.net/phonebookContacts?retryWrites=true&w=majority&appName=FullStackOpenPart3`;
-
-// mongoose.set("strictQuery", false);
-// mongoose.connect(url);
-
-// const contactSchema = new mongoose.Schema({
-//   name: String,
-//   phoneNumber: String,
-// });
-
-// const Contact = mongoose.model("Contact", contactSchema);
-
 app.use(cors());
 app.use(express.json());
 // app.use(express.static("dist"));
@@ -78,26 +60,41 @@ app.get("/info", (request, response) => {
 });
 
 //look up specific contact
-app.get("/api/contacts/:id", (request, response) => {
-  Contact.findById(request.params.id).then((contact) => {
-    response.json(contact);
-  });
+app.get("/api/contacts/:id", (request, response, next) => {
+  Contact.findById(request.params.id)
+    .then((contact) => {
+      if (contact) {
+        response.json(contact);
+      } else {
+        response.status(404).end();
+      }
+    })
+    .catch((error) => {
+      next(error);
+    });
 });
 
 //delete a contact
 app.delete("/api/contacts/:id", (request, response) => {
-  const searchedId = request.params.id;
-  contacts = contacts.filter(
-    (contact) => contact.id.toString() !== searchedId.toString()
-  );
-  response.send("successfully deleted!");
+  const id = request.params.id;
+
+  // used for mock data before adding mongodb
+  // contacts = contacts.filter(
+  //   (contact) => contact.id.toString() !== searchedId.toString()
+  // );
+  Contact.findByIdAndDelete(id)
+    .then((result) => {
+      response.status(204).end();
+    })
+    .catch((error) => next(error));
 });
 
-const generateId = () => {
-  const maxId =
-    contacts.length > 0 ? Math.max(...contacts.map((n) => n.id)) : 0;
-  return maxId + 1;
-};
+// old code used for 'unique' id's before adding in mongo
+// const generateId = () => {
+//   const maxId =
+//     contacts.length > 0 ? Math.max(...contacts.map((n) => n.id)) : 0;
+//   return maxId + 1;
+// };
 
 app.post("/api/contacts", (request, response) => {
   const body = request.body;
@@ -142,6 +139,17 @@ app.put("/api/contacts/:id", (request, response) => {
 });
 
 const PORT = process.env.PORT;
+
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message);
+
+  if (error.name === "CastError") {
+    return response.status(400).send({ error: "malformatted id" });
+  }
+  next(error);
+};
+
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
