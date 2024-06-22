@@ -42,7 +42,7 @@ app.get("/", (request, response) => {
 //list all contacts
 app.get("/api/contacts", (request, response) => {
   Contact.find({}).then((contacts) => {
-    console.log(contacts);
+    // console.log(contacts);
     response.json(contacts);
   });
 });
@@ -53,10 +53,11 @@ const time = now.toLocaleString();
 
 //number of contacts
 app.get("/info", (request, response) => {
-  response.send(`<p>Phonebook has info for ${contacts.length} people</p>
-  <br/>
-  <p>${time}</p>
-  `);
+  Contact.countDocuments({})
+    .then((result) => {
+      response.send(`<p>You have ${result} contacts</p>`);
+    })
+    .catch((error) => next(error));
 });
 
 //look up specific contact
