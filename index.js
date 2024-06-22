@@ -69,13 +69,11 @@ app.get("/api/contacts/:id", (request, response, next) => {
         response.status(404).end();
       }
     })
-    .catch((error) => {
-      next(error);
-    });
+    .catch((error) => next(error));
 });
 
 //delete a contact
-app.delete("/api/contacts/:id", (request, response) => {
+app.delete("/api/contacts/:id", (request, response, next) => {
   const id = request.params.id;
 
   // used for mock data before adding mongodb
@@ -84,7 +82,11 @@ app.delete("/api/contacts/:id", (request, response) => {
   // );
   Contact.findByIdAndDelete(id)
     .then((result) => {
-      response.status(204).end();
+      if (result) {
+        response.status(204).end();
+      } else {
+        response.status(404).send({ error: "Contact not found" });
+      }
     })
     .catch((error) => next(error));
 });
@@ -113,29 +115,39 @@ app.post("/api/contacts", (request, response) => {
   });
 });
 
-app.put("/api/contacts/:id", (request, response) => {
-  const body = request.body;
+app.put("/api/contacts/:id", (request, response, next) => {
+  if (request.params.id === undefined) {
+    response.status(400).json({ error: "Missing id in request" });
+  } else {
+    const contact = { number: request.body.number };
 
-  const contactToEdit = contacts.find(
-    (contact) => contact.id.toString() === request.params.id.toString()
-  );
+    Contact.findByIdAndUpdate(request.params.id, contact, { new: true })
+      .then((updatedContact) => {
+        response.json(updatedContact);
+      })
+      .catch((error) => next(error));
+  }
+
+  // const contactToEdit = contacts.find(
+  //   (contact) => contact.id.toString() === request.params.id.toString()
+  // );
 
   //if we find a contact to edit then do stuff
-  if (contactToEdit) {
-    const updatedContactInfo = {
-      id: contactToEdit.id,
-      name: contactToEdit.name,
-      number: body.number,
-    };
-    const targetContact = contacts.indexOf(contactToEdit);
-    contacts.splice(targetContact, 1, updatedContactInfo);
-    // response.status(201).json({ message: "contact number updated" });
-    response.json(contacts);
-  } else {
-    response.status(404).json({
-      message: "unable to find contact to edit",
-    });
-  }
+  // if (contactToEdit) {
+  //   const updatedContactInfo = {
+  //     id: contactToEdit.id,
+  //     name: contactToEdit.name,
+  //     number: body.number,
+  //   };
+  //   const targetContact = contacts.indexOf(contactToEdit);
+  //   contacts.splice(targetContact, 1, updatedContactInfo);
+  //   // response.status(201).json({ message: "contact number updated" });
+  //   response.json(contacts);
+  // } else {
+  //   response.status(404).json({
+  //     message: "unable to find contact to edit",
+  //   });
+  // }
 });
 
 const PORT = process.env.PORT;
