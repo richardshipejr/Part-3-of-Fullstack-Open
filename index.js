@@ -7,7 +7,7 @@ const cors = require("cors");
 
 app.use(cors());
 app.use(express.json());
-// app.use(express.static("dist"));
+app.use(express.static("dist"));
 
 app.use(morgan("tiny"));
 
@@ -46,10 +46,6 @@ app.get("/api/contacts", (request, response) => {
     response.json(contacts);
   });
 });
-
-const now = new Date();
-
-const time = now.toLocaleString();
 
 //number of contacts
 app.get("/info", (request, response) => {
